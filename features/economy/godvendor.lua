@@ -4,7 +4,6 @@ require 'table_dumper';
 ---@type Vector4?
 local teleportedFrom = nil;
 
-local vendorEntityHash = 9010641;
 local originalVendorRecord = "Vendors.std_arr_foodshop_02";
 local newVendorRecord = "Vendors.godvendor";
 local quantityRecord = newVendorRecord .. "_inline_quantity";
@@ -543,11 +542,14 @@ function IsGodVendor(vendor)
         return false;
     end
 
-    if vendorObject:GetPersistentID().entityHash ~= vendorEntityHash then
-        return false;
-    end
+    local worldPos = vendorObject:GetWorldPosition();
 
-    return true;
+    if worldPos.x <= -980 and worldPos.x >= -990 and
+       worldPos.y <= -1150 and worldPos.y >= -1160 then
+        return true;
+    end
+    
+    return false;
 end
 
 function CleanupRecord(record)

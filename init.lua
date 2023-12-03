@@ -140,8 +140,6 @@ end);
 -- - ImGuiWindowFlags.AlwaysAutoResize
 local featureWindowFlags = 193;
 
-print(featureWindowFlags);
-
 local function DrawMainSection()
     ImGui.Text("Hey! Thank you for using my mod.");
     ImGui.Text("Also don't forget to check 'Bindings' section of CET.");
@@ -168,6 +166,12 @@ local function DrawMainSection()
     if changed then 
         SetSetting("menu.showFeatureStatus", newValue);
     end;
+
+    local value, changed = ImGui.Checkbox("Bigger navigation bar (for 2K resolution and up)", GetSettingBool("menu.biggerNavBar", false));
+
+    if changed then
+        SetSetting("menu.biggerNavBar", value);
+    end
 
     ImGui.NewLine();
 
@@ -244,19 +248,29 @@ registerForEvent("onDraw", function ()
     
     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, 15, 15);
 
-    if not ImGui.Begin("Menu mod", ImGuiWindowFlags.AlwaysAutoResize) then
+    if not ImGui.Begin("Menu mod") then
         ImGui.PopStyleVar();
         return;
     end
 
-    if not ImGui.BeginTable("Table", 3) then
+    ImGui.SetWindowSize(600, 600, ImGuiCond.Appearing);
+
+    if not ImGui.BeginTable("Table", 2) then
         return;
     end
 
-    ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, 15, 15);
-    
-    ImGui.TableSetupColumn("nav", ImGuiTableColumnFlags.WidthFixed, 100);
-    ImGui.TableSetupColumn("cat", ImGuiTableColumnFlags.WidthFixed, 400);
+    local navSize = 100;
+    local navItemSpacing = 15;
+
+    if GetSettingBool("menu.biggerNavBar", false) then
+        navSize = 300;
+        navItemSpacing = 30;
+    end
+
+    ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, 15, navItemSpacing);
+
+    ImGui.TableSetupColumn("nav", ImGuiTableColumnFlags.WidthFixed, navSize);
+    --ImGui.TableSetupColumn("cat", ImGuiTableColumnFlags.WidthFixed, 400);
     ImGui.TableNextColumn();
 
     if playerIsInGame then
