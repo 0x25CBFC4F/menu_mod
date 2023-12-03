@@ -1,0 +1,28 @@
+if not ImGui.BeginTabItem(feature.name) then goto continue end;
+    
+            ImGui.NewLine();
+    
+            if #feature.description > 0 then
+                for _, val in pairs(feature.description) do
+                    ImGui.Text(val);     
+                end
+    
+                ImGui.NewLine();
+            end
+    
+            local enabledValue, enabledPressed = ImGui.Checkbox("Enable", feature.enabled);
+    
+            if enabledPressed then
+                feature.enabled = enabledValue;
+            end
+    
+            ImGui.NewLine();
+    
+            if feature.needsEnabling and not feature.enabled then
+                goto continue;
+            end
+    
+            feature:onDraw();
+            ImGui.EndTabItem();
+    
+            ::continue::

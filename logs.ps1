@@ -1,0 +1,1 @@
+clear && tail -f -n 10 menu_mod.log
