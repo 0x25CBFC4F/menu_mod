@@ -354,6 +354,10 @@ registerForEvent("onDraw", function ()
 
     for _, feature in ipairs(complexFeatures) do
         if ImGui.CollapsingHeader(feature.name) then
+            for _, s in ipairs(feature.description) do
+                ImGui.Text(s);
+            end
+
             feature:onDraw();
         end
     end
