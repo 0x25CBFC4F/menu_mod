@@ -20,6 +20,7 @@ require 'features/player/infinitestamina';
 require 'features/player/infiniteoxygen';
 require 'features/player/infiniteram';
 require 'features/player/infiniteconsumables';
+require 'features/player/cwcapacity';
 
 -- Economy
 require 'features/economy/money';

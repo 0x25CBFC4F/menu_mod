@@ -36,7 +36,7 @@ end
 local feature = NewFeature("allvehicles", "Vehicles");
 
 feature.description = {
-    "That button gonna put AutoFixer into bankruptcy."
+    "Vehicle management"
 };
 
 feature.needsEnabling = false;
@@ -157,7 +157,7 @@ feature.onDraw = function()
 
         ImGui.SameLine();
 
-        if ImGui.Button("Copy vehicle ID") then
+        if ImGui.Button("Copy vehicle ID##"..vehicle.id.value) then
             ImGui.SetClipboardText(vehicle.id.value);
         end
     end
