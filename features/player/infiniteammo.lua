@@ -26,11 +26,10 @@ local function RemoveModifiers(wStatsObjId, gss)
 end
 
 ---@param item ItemID?
+---@param enabled boolean
 ---@returns nil
-local function ApplyModifiers(item)
+local function ApplyModifiers(item, enabled)
     if not item then return end;
-
-    local enabled = feature.enabled;
 
     local gss = Game.GetStatsSystem();
     local wItemData = Game.GetTransactionSystem():GetItemData(Game.GetPlayer(), item);
@@ -38,6 +37,10 @@ local function ApplyModifiers(item)
     if wItemData == nil then
         return
     end
+
+    -- Only enabling modifiers when it is request AND feature is enabled
+    -- We're removing infinite ammo in any case
+    enabled = enabled and feature.enabled;
 
     local wStatsObjId = wItemData:GetStatsObjectID();
     
@@ -55,9 +58,6 @@ local function GetActiveWeaponItemId()
     local weapon = player:GetActiveWeapon();
     if not weapon then return end;
 
-    local player = Game.GetPlayer();
-    Game.GetStatPoolsSystem():RequestChangingStatPoolValue(player:GetEntityID(), gamedataStatPoolType.Health, -100, player, false, false);
-
     return weapon:GetItemID();
 end
 
@@ -69,22 +69,22 @@ feature.onInit = function ()
     Observe("PlayerPuppet", "OnItemEquipped",
         ---@param itemId ItemID
         function(_, _, itemId)
-            ApplyModifiers(itemId);
+            ApplyModifiers(itemId, true);
         end);
 
     Observe("PlayerPuppet", "OnItemUnequipped",
         ---@param itemId ItemID
         function(_, _, itemId)
-            ApplyModifiers(itemId);
+            ApplyModifiers(itemId, false);
         end);
 end
 
 feature.onEnable = function ()
-    ApplyModifiers(GetActiveWeaponItemId());
+    ApplyModifiers(GetActiveWeaponItemId(), true);
 end
 
 feature.onDisable = function ()
-    ApplyModifiers(GetActiveWeaponItemId());
+    ApplyModifiers(GetActiveWeaponItemId(), false);
 end
 
 RegisterFeature("Player", feature);

@@ -58,7 +58,7 @@ local playerIsInGame = false;
 function SetFeatureEnabled(feature, enabled)
     feature.enabled = enabled;
     SetSetting(feature.id .. ".enabled", feature.enabled);
-    
+
     if enabled then
         feature:onEnable();
         ShowNotification(CreateNotification(feature.name, "Feature was enabled."));
@@ -163,8 +163,8 @@ local function DrawMainSection()
     ImGui.NewLine();
 
     local newValue, changed = ImGui.Checkbox("Show 'Features/Settings' window", GetSettingBool("menu.showFeatureStatus", true));
-    
-    if changed then 
+
+    if changed then
         SetSetting("menu.showFeatureStatus", newValue);
     end;
 
@@ -186,7 +186,7 @@ local function DrawFeaturesMenu()
     if GetSettingBool("menu.showFeatureStatus", true) and
         playerIsInGame and
         ImGui.Begin("Features", featureWindowFlags) then
-        
+
         for _, section in ipairs(SectionKeysSorted) do
             local anyEnableable = false;
             local features = Sections[section];
@@ -246,7 +246,7 @@ registerForEvent("onDraw", function ()
     DrawFeaturesMenu();
 
     if not menuShown then return end;
-    
+
     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, 15, 15);
 
     if not ImGui.Begin("Menu mod") then
@@ -277,11 +277,11 @@ registerForEvent("onDraw", function ()
     if playerIsInGame then
         for _, sectionKey in ipairs(SectionKeysSorted) do
             ImGui.Separator();
-    
+
             if ImGui.Selectable(sectionKey) then
                 selectedSection = sectionKey;
             end
-        end 
+        end
     else
         ImGui.Separator();
         ImGui.Selectable(mainSection);
