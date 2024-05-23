@@ -1,6 +1,6 @@
 require 'features';
 
-local feature = NewFeature("vehicleinstantenterexit", "Instant vehicle enter/exit");
+local feature = NewFeature("vehicleinstantenterexit", "Instant vehicle enter");
 
 feature.description = {
     "Feels like I ran out of the jokes"

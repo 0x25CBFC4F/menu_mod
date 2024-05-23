@@ -79,7 +79,7 @@ feature.onDraw = function()
     end
 
     if not menuEnabled or
-       not ImGui.Begin("All vehicles") then
+       not ImGui.Begin("All vehicles", ImGuiWindowFlags.NoCollapse) then
         return;
     end
 
