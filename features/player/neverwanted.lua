@@ -8,16 +8,23 @@ feature.description = {
 
 feature.needsEnabling = true;
 
+feature.onInit = function()
+    Override("PreventionSystem", "CanPreventionReactToInput", 
+    ---@param this PreventionSystem
+    function(this, wrappedMethod)
+        if not feature.enabled then
+            return wrappedMethod(this);
+        end;
+
+        return false;
+    end);
+end
+
 feature.onEnable = function()
     local ps = Game.GetScriptableSystemsContainer():Get("PreventionSystem");
 
+    ps:CancelAllDelayedEvents();
     ps:ChangeHeatStage(EPreventionHeatStage.Heat_0, "");
-    ps:TogglePreventionSystem(false);
-end
-
-feature.onDisable = function ()
-    local ps = Game.GetScriptableSystemsContainer():Get("PreventionSystem");
-    ps:TogglePreventionSystem(true);
 end
 
 RegisterFeature("Player", feature);
