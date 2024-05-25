@@ -39,6 +39,9 @@ require 'features/vehicles/vehiclegodmode';
 require 'features/vehicles/instantvehicle';
 require 'features/vehicles/repair';
 require 'features/vehicles/instantenterexit';
+require 'features/vehicles/rainbowlights';
+require 'features/vehicles/customvehiclelights';
+require 'features/vehicles/lightsbrightness';
 
 -- Misc
 require 'features/misc/johnnyui';
