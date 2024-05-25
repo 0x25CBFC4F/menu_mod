@@ -13,7 +13,7 @@ feature.onInit = function()
     ---@param this PreventionSystem
     function(this, wrappedMethod)
         if not feature.enabled then
-            return wrappedMethod(this);
+            return wrappedMethod();
         end;
 
         return false;
