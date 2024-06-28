@@ -1,0 +1,172 @@
+require 'features';
+
+local feature = NewFeature("aimbot", "Aimbot");
+
+feature.description = {
+    ""
+};
+
+feature.needsEnabling = true;
+
+local updateTime = 0;
+local lastUpdateTime = 0;
+local latestTarget = nil;
+
+local lastAdjust = 0;
+local adjustInterval = 0.1;
+local doAim = false;
+
+---@type EulerAngles
+local lastBestEulerAngles;
+local lastBestPitch = 0;
+
+feature.onInit = function ()
+    Override("ShootEvents", "OnEnter",
+    ---@param scriptInterface gamestateMachineGameScriptInterface
+    function(this, stateContext, scriptInterface, wrapped)
+        if not doAim then
+            return wrapped(stateContext, scriptInterface);
+        end
+
+        if (os.clock() - lastAdjust) <= adjustInterval then
+            return wrapped(stateContext, scriptInterface);
+        end
+    
+        lastUpdateTime = os.clock();
+
+        local cameraComponent = Game.GetPlayer():GetFPPCameraComponent();
+        cameraComponent.pitchMax = lastBestPitch;
+        cameraComponent.pitchMin = lastBestPitch;
+
+        -- Adjusting yaw
+        local adjustRequest = AdjustTransformWithDurations.new();
+        adjustRequest:SetGravity(-16);
+        adjustRequest:SetTarget(latestTarget);
+        adjustRequest:SetSlideDuration(-1.0);
+        adjustRequest:SetRotationDuration(0.06);
+        adjustRequest:SetUseParabolicMotion(false);
+        adjustRequest:SetCurve(CName.new("None"));
+        --adjustRequest:SetRotation(lastBestEulerAngles:ToQuat());
+
+        stateContext:SetTemporaryScriptableParameter("adjustTransform", adjustRequest, true);
+
+        return wrapped(stateContext, scriptInterface);
+    end);
+end
+
+---Adds two vectors
+---@param vec1 Vector4
+---@param vec2 Vector4
+---@return Vector4
+function AddVectors(vec1, vec2)
+    return Vector4.new(vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z, vec1.w);
+end
+
+function Clamp(x, min, max)
+    if x < min then return min end
+    if x > max then return max end
+    return x
+end
+
+
+feature.onUpdate = function ()
+    if not feature.enabled then return end;
+
+    if (os.clock() - lastUpdateTime) <= updateTime then
+        return;
+    end
+
+    lastUpdateTime = os.clock();
+
+    local player = Game.GetPlayer();
+
+    if not player then 
+        doAim = false;
+        return;
+    end;
+
+    local playerWeapon = player:GetActiveWeapon();
+    
+    if not playerWeapon then
+        doAim = false;
+        return;
+    end;
+
+    local targetingSystem = Game.GetTargetingSystem();
+
+    local targetSearchQuery = TargetSearchQuery.new();
+    targetSearchQuery.filterObjectByDistance = false;
+    targetSearchQuery.maxDistance = 100;
+    targetSearchQuery.ignoreInstigator = true;
+    targetSearchQuery.includeSecondaryTargets = true;
+    targetSearchQuery.searchFilter = TSF_Quickhackable();
+    targetSearchQuery.testedSet = TargetingSet.ClearlyVisible;
+    TargetSearchQuery.SetComponentFilter(targetSearchQuery, TargetComponentFilterType.ShootingLimbCyber);
+
+    local closestEnemyEntity = targetingSystem:GetObjectClosestToCrosshair(player, targetSearchQuery);
+
+    if not closestEnemyEntity then
+        doAim = false;
+        return;
+    end;
+
+    local playerWeaponPosition = playerWeapon:GetWorldPosition();
+    local playerWeaponDirection = playerWeapon:GetWorldForward();
+    local bestComponent = targetingSystem:GetBestComponentOnTargetObject(playerWeaponPosition, playerWeaponDirection, closestEnemyEntity, TargetComponentFilterType.HeadTarget);
+
+    if not bestComponent then
+        doAim = false;
+        return;
+     end;
+
+    local cameraComponent = Game.GetPlayer():GetFPPCameraComponent();
+
+    if not cameraComponent then return end;
+
+    local cameraPosition = Matrix.GetTranslation(cameraComponent:GetLocalToWorld())
+    local hitboxPosition = Matrix.GetTranslation(bestComponent:GetLocalToWorld());
+
+    latestTarget = bestComponent:GetEntity();
+
+    if latestTarget["GetVelocity"] ~= nil then
+        ---@type NPCPuppet
+        local npcPuppet = bestComponent:GetEntity();
+        local npcVelocity = Vector4.Normalize(npcPuppet:GetVelocity());
+        local factor = 1.2;
+        local predictedHitboxPosition = Vector4.new(
+            hitboxPosition.x + npcVelocity.x * factor,
+            hitboxPosition.y + npcVelocity.y * factor,
+            hitboxPosition.z,-- + npcVelocity.z * factor,
+            hitboxPosition.w
+        );
+        hitboxPosition = predictedHitboxPosition;
+    end
+
+    --hitboxPosition = predictedHitboxPosition;
+    
+    local directionVector = Vector4.new(
+        hitboxPosition.x - cameraPosition.x,
+        hitboxPosition.y - cameraPosition.y,
+        hitboxPosition.z - cameraPosition.z,
+        hitboxPosition.w - cameraPosition.w
+    );
+
+    local dirNormalized = Vector4.Normalize(directionVector);
+
+    --local directionVector = Vector4.new(
+    --    cameraPosition.x - hitboxPosition.x,
+    --    cameraPosition.y - hitboxPosition.y,
+    --    cameraPosition.z - hitboxPosition.z,
+    --    cameraPosition.w - hitboxPosition.w
+    --);
+
+    local hyp = math.sqrt(dirNormalized.x^2 + dirNormalized.y^2);
+    local pitch = math.atan(dirNormalized.z, hyp);
+    
+    --pitch = Clamp(pitch, -80, 80);
+
+    doAim = true;
+    lastBestPitch = pitch * (180 / math.pi);
+end
+
+RegisterFeature("Player", feature);

@@ -55,6 +55,7 @@ table.insert(SectionKeysSorted, 1, mainSection);
 
 local menuShown = false;
 local playerIsInGame = false;
+local featuresInitialized = false;
 
 ---Helper function for enabling/disabling features
 ---@param feature Feature
@@ -85,44 +86,27 @@ for _, feature in pairs(Features) do
     feature:setupHotkeys();
 end
 
--- Functions for enabling/disabling features on game session change
-function GameHasStarted()
-    playerIsInGame = true;
-
-    for _, feature in pairs(Features) do
-        if feature.enabled then
-            feature:onEnable();
-        end
-    end
-end
-
-function GameHasEnded()
-    playerIsInGame = false;
-
-    for _, feature in pairs(Features) do
-        if feature.enabled then
-            feature:onDisable();
-        end
-    end
-
-    selectedSection = mainSection;
-end
-
 -- Settings load/save
 registerForEvent("onInit", function ()
     LoadUserSettings();
+
+    ObserveBefore('PlayerSystem', 'OnShutdown',
+    function()
+        playerIsInGame = false;
+    end);
+
+    ObserveBefore('PlayerSystem', 'OnGameRestored',
+    function()
+        playerIsInGame = true;
+    end);
+
+    local blackboardDefs = Game.GetAllBlackboardDefs();
+    playerIsInGame = not Game.GetBlackboardSystem():Get(blackboardDefs.UI_System):GetBool(blackboardDefs.UI_System.IsInMenu);
 
     for _, feature in pairs(Features) do
         local isEnabled = GetSettingBool(feature.id .. ".enabled", false);
         feature.enabled = isEnabled;
         feature:onInit();
-    end
-
-    gameSession.Listen(gameSession.Event.Start, GameHasStarted);
-    gameSession.Listen(gameSession.Event.End, GameHasEnded);
-
-    if gameSession.IsLoaded() then
-        GameHasStarted();
     end
 end);
 
@@ -298,7 +282,7 @@ registerForEvent("onDraw", function ()
 
     -- A shitty way to do it, but I don't want to extend sections
     -- with a custom onDraw methods
-    if selectedSection == mainSection then
+    if not playerIsInGame or selectedSection == mainSection then
         DrawMainSection();
 
         ImGui.PopStyleVar();
@@ -374,16 +358,28 @@ end)
 -- Updates handling
 registerForEvent("onUpdate", function ()
     if not playerIsInGame then return end;
-    if Game.GetPlayer() == nil then return end;
+
+    if not featuresInitialized then
+        featuresInitialized = true;
+
+        for _, feature in pairs(Features) do
+            if feature.enabled then
+                feature:onEnable();
+            end
+        end
+
+        print(string.format("[MenuMod] Enabled %i features.", #Features));
+    end
 
     for _, feature in pairs(Features) do
         if feature.needsEnabling and not feature.enabled then goto continue end;
 
-        local result = pcall(function() feature:onUpdate(); end);
+        feature:onUpdate();
+        --local result = pcall(function()  end);
 
-        if not result then
-            print("Feature " .. feature.id .. " crashed!");
-        end
+        --if not result then
+        --    print("Feature " .. feature.id .. " crashed!");
+        --end
 
         ::continue::
     end

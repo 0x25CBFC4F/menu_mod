@@ -8,6 +8,14 @@ feature.description = {
 
 feature.needsEnabling = true;
 
+feature.onInit = function()
+    Override('PlayerSystem', 'OnLocalPlayerPossesionChanged',
+    function (_, original)
+        if feature.enabled then return end;
+        return original();
+    end);
+end
+
 feature.onEnable = function()
     local ui = Game.GetUISystem();
     ui:SetGlobalThemeOverride("Possessed");
